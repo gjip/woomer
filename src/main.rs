@@ -157,7 +157,7 @@ fn main() {
         let enable_spotlight = rl.is_key_down(KeyboardKey::KEY_LEFT_CONTROL)
             || rl.is_key_down(KeyboardKey::KEY_RIGHT_CONTROL);
         let mut scrolled_amount = rl.get_mouse_wheel_move_v().y;
-        if rl.is_key_down(KeyboardKey::KEY_U) {
+        if rl.is_key_down(KeyboardKey::KEY_F) {
             scrolled_amount += 0.1;
         }
         if rl.is_key_down(KeyboardKey::KEY_D) {
@@ -184,7 +184,7 @@ fn main() {
                 _ => {}
             }
             scale_pivot =
-                if rl.is_key_down(KeyboardKey::KEY_U) || rl.is_key_down(KeyboardKey::KEY_D) {
+                if rl.is_key_down(KeyboardKey::KEY_F) || rl.is_key_down(KeyboardKey::KEY_D) {
                     Vector2 {
                         x: (rl.get_screen_width() / 2) as f32,
                         y: (rl.get_screen_height() / 2) as f32,
