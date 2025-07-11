@@ -2,6 +2,7 @@ use std::{env, process};
 
 use libwayshot::WayshotConnection;
 use raylib::{
+    core::math::Vector2,
     ffi::{Image as FfiImage, SetWindowMonitor, ToggleFullscreen},
     prelude::*,
 };
@@ -153,9 +154,15 @@ fn main() {
             spotlight_radius_multiplier_uniform_location =
                 spotlight_shader.get_shader_location("spotlightRadiusMultiplier");
         }
-        let enable_spotlight =
-            rl.is_key_down(KeyboardKey::KEY_LEFT_CONTROL) || rl.is_key_down(KeyboardKey::KEY_RIGHT_CONTROL);
-        let scrolled_amount = rl.get_mouse_wheel_move_v().y;
+        let enable_spotlight = rl.is_key_down(KeyboardKey::KEY_LEFT_CONTROL)
+            || rl.is_key_down(KeyboardKey::KEY_RIGHT_CONTROL);
+        let mut scrolled_amount = rl.get_mouse_wheel_move_v().y;
+        if rl.is_key_down(KeyboardKey::KEY_U) {
+            scrolled_amount += 0.1;
+        }
+        if rl.is_key_down(KeyboardKey::KEY_D) {
+            scrolled_amount -= 0.1;
+        }
         if rl.is_key_pressed(KeyboardKey::KEY_LEFT_CONTROL)
             || rl.is_key_pressed(KeyboardKey::KEY_RIGHT_CONTROL)
         {
@@ -165,7 +172,8 @@ fn main() {
         if scrolled_amount != 0.0 {
             match (
                 enable_spotlight,
-                rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT) || rl.is_key_down(KeyboardKey::KEY_RIGHT_SHIFT),
+                rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT)
+                    || rl.is_key_down(KeyboardKey::KEY_RIGHT_SHIFT),
             ) {
                 (_, false) => {
                     delta_scale += scrolled_amount as f64;
@@ -175,7 +183,15 @@ fn main() {
                 }
                 _ => {}
             }
-            scale_pivot = rl.get_mouse_position();
+            scale_pivot =
+                if rl.is_key_down(KeyboardKey::KEY_U) || rl.is_key_down(KeyboardKey::KEY_D) {
+                    Vector2 {
+                        x: (rl.get_screen_width() / 2) as f32,
+                        y: (rl.get_screen_height() / 2) as f32,
+                    }
+                } else {
+                    rl.get_mouse_position()
+                }
         }
         if delta_scale.abs() > 0.5 {
             let p0 = scale_pivot / rl_camera.zoom;
@@ -191,6 +207,24 @@ fn main() {
         spotlight_radius_multiplier_delta -=
             spotlight_radius_multiplier_delta * rl.get_frame_time() as f64 * 4.0;
         const VELOCITY_THRESHOLD: f32 = 15.0;
+
+        {
+            let mut delta = Vector2 { x: 0.0, y: 0.0 };
+            for (key, dx, dy) in [
+                (KeyboardKey::KEY_H, VELOCITY_THRESHOLD, 0.0),
+                (KeyboardKey::KEY_J, 0.0, -VELOCITY_THRESHOLD),
+                (KeyboardKey::KEY_K, 0.0, VELOCITY_THRESHOLD),
+                (KeyboardKey::KEY_L, -VELOCITY_THRESHOLD, 0.0),
+            ] {
+                if rl.is_key_down(key) {
+                    delta += rl.get_screen_to_world2D(
+                        rl.get_mouse_position() - (raylib::core::math::Vector2 { x: dx, y: dy }),
+                        rl_camera,
+                    ) - rl.get_screen_to_world2D(rl.get_mouse_position(), rl_camera);
+                }
+            }
+            rl_camera.target += delta;
+        }
         if rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT) {
             let delta = rl
                 .get_screen_to_world2D(rl.get_mouse_position() - rl.get_mouse_delta(), rl_camera)
